@@ -304,23 +304,4 @@ python inference_realtime.py
 
 ---
 
-## 👤 Author
-Built as part of a Sign Language Detection assignment
-using MediaPipe, TensorFlow, and OpenCV
-```
 
----
-
-Save it bro! That's a really solid README 🤙
-
----
-
-## Now You're Fully Done! ✅
-```
-✅ Phase 1 — Setup
-✅ Phase 2 — Data collection
-✅ Phase 3 — Pose extraction
-✅ Phase 4 — Model training (98.87%!)
-✅ Phase 5 — Evaluation
-✅ Phase 6 — Real-time inference
-✅ Phase 7 — README done!
