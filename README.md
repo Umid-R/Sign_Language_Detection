@@ -1,4 +1,4 @@
-# 🤟 Sign Language Detection System
+#  Sign Language Detection System
 
 A real-time American Sign Language (ASL) detection system that uses
 hand pose estimation to recognize hand gestures and translate them
