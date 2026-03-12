@@ -1,0 +1,65 @@
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# ── Virtual Environments ──────────────────────────────────────
+venv/
+env/
+.env
+.venv
+ENV/
+
+# ── Conda ─────────────────────────────────────────────────────
+.conda/
+
+# ── VS Code ───────────────────────────────────────────────────
+.vscode/
+.vs/
+
+# ── macOS ─────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ── Data Files ────────────────────────────────────────────────
+data/raw/           # too large for github (88,800 images!)
+data/poses/landmarks.csv
+data/poses/X_test.npy
+data/poses/y_test.npy
+
+# ── Model Files ───────────────────────────────────────────────
+models/best_model.h5
+models/label_encoder.pkl
+
+# ── Jupyter ───────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+logs/
+tensorboard_logs/
+
+# ── Misc ──────────────────────────────────────────────────────
+*.zip
+*.tar.gz
+*.rar
+.idea/
