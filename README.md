@@ -87,7 +87,7 @@ The full dataset is not stored in this repository (88,800 files is too large for
 ## 🧩 Problems I hit and how I solved them
 
 **1. Library version conflicts (MediaPipe, OpenCV, NumPy, protobuf, TensorFlow).**
-These packages broke each other on my Mac depending on install order and versions. I made a clean conda environment, found a combination that works, and pinned the exact versions in `requirements.txt` (NumPy 1.26.4, protobuf 3.20.3, OpenCV 4.8.1.78, MediaPipe 0.10.9, TensorFlow 2.13.0).
+These packages broke each other on my Mac depending on install order and versions. I made a clean conda environment, found a combination that works, and pinned the exact versions in `requirements.txt` (NumPy 1.24.3, protobuf 3.20.3, OpenCV 4.8.1.78, MediaPipe 0.10.9, TensorFlow 2.15.0).
 
 **2. 17.9% of the images had no detectable hand.**
 MediaPipe could not find a hand in about 1 of every 6 images. I dropped those instead of guessing, which left 72,901 clean samples.
