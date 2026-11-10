@@ -2,7 +2,11 @@
 
 A real-time system that recognizes the American Sign Language (ASL) alphabet and digits from a webcam and shows the result on screen, so a signed letter or number becomes readable text.
 
-<!-- DEMO -->
+<p align="center">
+  <img src="docs/demo.gif" width="560" alt="Live demo: signing A, C, E, F, M builds the sentence B C E F M">
+</p>
+
+*Live demo (my webcam, a laptop CPU): the hand skeleton, the predicted sign with its confidence, and the sentence it builds. [Full-quality video (MP4)](docs/demo.mp4)*
 
 ---
 
@@ -27,7 +31,7 @@ A real-time system that recognizes the American Sign Language (ASL) alphabet and
 |---|---|
 | Overall test accuracy | **98.87%** (test set = 15% of the data) |
 | Average prediction confidence | 99.4% |
-| Real-time speed | 20+ FPS on a laptop |
+| Real-time speed | Runs in real time on a laptop CPU (no GPU) |
 | Model file size | 806 KB, about 60,000 parameters |
 | Training time | about 5 minutes on a laptop |
 | Letters A–Z accuracy | 94–100% per letter |
