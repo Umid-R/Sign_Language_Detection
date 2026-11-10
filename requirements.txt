@@ -1,9 +1,12 @@
-numpy==1.26.4
+# Versions below are the ones the demo was trained and tested with (Python 3.10, Apple Silicon Mac).
+numpy==1.24.3
 protobuf==3.20.3
 opencv-python==4.8.1.78
 mediapipe==0.10.9
-tensorflow==2.13.0
-scikit-learn
-pandas
-matplotlib
-seaborn
+tensorflow-macos==2.15.0; sys_platform == "darwin" and platform_machine == "arm64"
+tensorflow==2.15.0; sys_platform != "darwin" or platform_machine != "arm64"
+keras==2.15.0
+scikit-learn==1.7.2
+pandas==2.3.3
+matplotlib==3.10.8
+seaborn==0.13.2
