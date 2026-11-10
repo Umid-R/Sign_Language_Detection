@@ -1,307 +1,163 @@
-#  Sign Language Detection System
+# 🤟 Sign Language Detection
 
-A real-time American Sign Language (ASL) detection system that uses
-hand pose estimation to recognize hand gestures and translate them
-into letters and digits.
+A real-time system that recognizes the American Sign Language (ASL) alphabet and digits from a webcam and shows the result on screen, so a signed letter or number becomes readable text.
 
----
-
-## 📋 Project Overview
-
-This system uses MediaPipe Hands to extract skeletal hand landmarks
-from webcam frames and feeds normalized pose vectors into a trained
-neural network classifier. The final output runs as a real-time
-inference pipeline on live webcam input.
-
-### What It Recognizes
-- All 26 ASL alphabet letters (A-Z)
-- Digits 0-9
-- Both left and right hands
-- Real-time live webcam feed
-
-### Key Results
-- Overall test accuracy : 98.87%
-- Average confidence    : 99.4%
-- Real-time FPS         : 20+ FPS
-- Model size            : < 10MB
+<!-- DEMO -->
 
 ---
 
-## 📁 Project Structure
-```
-sign_language_detection/
-│
-├── data/
-│   ├── raw/                    # Webcam captured frames
-│   │   ├── A/                  # 3300 images per letter
-│   │   ├── B/
-│   │   │   ... (A-Z and 0-9)
-│   │   └── 9/
-│   └── poses/
-│       ├── landmarks.csv       # Extracted pose vectors
-│       ├── X_test.npy          # Test features
-│       └── y_test.npy          # Test labels
-│
-├── models/
-│   ├── best_model.h5           # Trained model
-│   └── label_encoder.pkl       # Label encoder
-│
-├── plots/
-│   ├── training_curves.png     # Loss and accuracy curves
-│   └── confusion_matrix.png    # Per class confusion matrix
-│
-├── collect_data.py             # Data collection script
-├── extract_poses.py            # Pose extraction script
-├── train.py                    # Model training script
-├── evaluate.py                 # Evaluation script
-├── inference_realtime.py       # Real-time inference script
-├── config.py                   # Configuration settings
-├── requirements.txt            # Dependencies
-└── README.md                   # This file
-```
+## About the project
+
+| | |
+|---|---|
+| **Problem** | Most people cannot read sign language. I wanted a small system that turns a hand sign into a letter or digit, live, using only a normal webcam. |
+| **Input** | Live webcam video (one hand in view). |
+| **Output** | The predicted letter (A–Z) or digit (0–9) on screen with a confidence bar, plus a sentence builder that collects letters into words. |
+| **What it recognizes** | 36 classes: 26 letters and 10 digits, left or right hand. |
+| **Who it could help** | Learners practicing ASL, and a base for tools that translate signs for people who do not know them. |
+| **My role** | Solo project: I collected data, built the whole pipeline, trained and evaluated the model, and wrote the real-time app. |
+| **Duration** | About 5 days. |
+| **Tools** | Python, MediaPipe Hands, OpenCV, TensorFlow/Keras, NumPy, pandas, scikit-learn, Matplotlib |
 
 ---
 
-## ⚙️ Setup Instructions
+## Results
 
-### 1. Clone or download the project
-```bash
-cd ~/Desktop
-cd sign_language_detection
-```
+| Metric | Value |
+|---|---|
+| Overall test accuracy | **98.87%** (test set = 15% of the data) |
+| Average prediction confidence | 99.4% |
+| Real-time speed | 20+ FPS on a laptop |
+| Model file size | 806 KB, about 60,000 parameters |
+| Training time | about 5 minutes on a laptop |
+| Letters A–Z accuracy | 94–100% per letter |
+| Digits 2–9 accuracy | 97–100% per digit |
+| Weakest classes | digit 0 (88.2%), digit 1 (82.8%) |
 
-### 2. Create a fresh conda environment
-```bash
-conda create -n sign_lang python=3.10 -y
-conda activate sign_lang
-```
+<p>
+  <img src="plots/confusion_matrix.png" width="520" alt="Confusion matrix">
+  <img src="plots/training_curves.png" width="520" alt="Training curves">
+</p>
 
-### 3. Install dependencies in correct order
-```bash
-pip install numpy==1.26.4
-pip install protobuf==3.20.3
-pip install opencv-python==4.8.1.78
-pip install mediapipe==0.10.9
-pip install tensorflow==2.13.0
-pip install scikit-learn pandas matplotlib seaborn
-```
-
-### 4. Verify installation
-```bash
-python -c "import cv2; import mediapipe; import tensorflow; print('All good!')"
-```
+**Honest note on the numbers:** the test set is a random split of the same dataset (70/15/15 train/validation/test, stratified). Many images in the dataset are similar frames of the same hand, so accuracy on a brand new person or a different camera and lighting is likely lower than 98.87%. Testing on new signers is the first thing I would do next.
 
 ---
 
-## 🚀 Usage Guide
+## How it works
 
-### Always activate the environment first:
-```bash
-conda activate sign_lang
-cd ~/Desktop/sign_language_detection
+```
+Webcam frame
+   ↓  MediaPipe Hands: 21 hand landmarks (x, y, z)
+   ↓  Normalize: wrist moved to the origin, scaled by wrist-to-middle-finger distance
+   ↓  63 numbers (21 × 3)
+   ↓  Neural network (MLP)
+   ↓  36 class probabilities
+   ↓  Confidence ≥ 0.85 and majority vote over the last 7 frames
+Letter / digit on screen
 ```
 
----
+Instead of feeding raw images to a big image model, I extract the hand skeleton first and classify only 63 numbers. This keeps the model tiny (806 KB), fast on a laptop CPU, and independent of the background, and independent of where the hand is and how big it appears, because normalization removes position and size.
 
-### Step 1 — Collect Your Own Data (Optional)
-```bash
-python collect_data.py
-```
-```
-Controls:
-    SPACEBAR → start capturing current gesture
-    Q        → quit and resume later
-    
-Tips:
-    - Print ASL chart and place next to laptop
-    - Collect both right and left hand
-    - Vary lighting and hand angle
-    - Script automatically skips completed gestures
-```
-
----
-
-### Step 2 — Extract Pose Landmarks
-```bash
-python extract_poses.py
-```
-```
-- Processes all images in data/raw/
-- Extracts 21 hand landmarks per image
-- Normalizes landmarks (wrist at origin)
-- Saves 63-dimensional vectors to landmarks.csv
-- Takes approximately 1-2 hours for full dataset
-```
-
----
-
-### Step 3 — Train The Model
-```bash
-python train.py
-```
-```
-- Loads landmarks.csv
-- Splits data 70/15/15 train/val/test
-- Trains MLP neural network
-- Saves best checkpoint to models/
-- Plots training curves to plots/
-- Takes approximately 5 minutes on M3 MacBook
-```
-
----
-
-### Step 4 — Evaluate The Model
-```bash
-python evaluate.py
-```
-```
-- Loads best model
-- Tests on held-out test set
-- Prints per-class accuracy report
-- Generates confusion matrix
-- Flags weak gesture classes
-```
-
----
-
-### Step 5 — Run Real-Time Inference
-```bash
-python inference_realtime.py
-```
-```
-Controls:
-    Q        → quit
-    C        → clear sentence buffer
-    SPACEBAR → add space to sentence
-
-Features:
-    - Hand skeleton drawn on screen
-    - Prediction label displayed
-    - Confidence score and bar
-    - Smoothing buffer (no flickering)
-    - Sentence builder
-```
-
----
-
-## 🛠️ Configuration
-
-All settings are in `config.py`:
-```python
-SAMPLES_PER_CLASS    = 300      # photos per gesture
-BATCH_SIZE           = 32       # training batch size
-EPOCHS               = 100      # max training epochs
-LEARNING_RATE        = 0.001    # Adam optimizer lr
-DROPOUT_RATE         = 0.3      # dropout regularization
-PATIENCE             = 10       # early stopping patience
-CONFIDENCE_THRESHOLD = 0.85     # min confidence for prediction
-SMOOTHING_BUFFER_SIZE = 7       # frames for majority vote
-```
-
----
-
-## 📊 Dataset
-
-| Source | Gestures | Images per class | Total |
-|--------|----------|-----------------|-------|
-| Kaggle ASL Alphabet | A-Z | 3000 | 78,000 |
-| Custom webcam (right hand) | A-Z, 0-9 | 300 | 10,800 |
-| Custom webcam (left hand) | A-Z, 0-9 | 300 | 10,800 |
-| **Total** | **36 classes** | **~3300** | **88,800** |
-
-### After Pose Extraction:
-```
-Total samples  : 72,901
-Success rate   : 82.1%
-Features       : 63 (21 landmarks × 3 coordinates)
-```
-
----
-
-## 🧠 Model Architecture
+**Model:**
 ```
 Input (63)
-    ↓
-Dense(256, ReLU) → BatchNorm → Dropout(0.3)
-    ↓
-Dense(128, ReLU) → BatchNorm → Dropout(0.3)
-    ↓
-Dense(64, ReLU)  → BatchNorm → Dropout(0.3)
-    ↓
-Dense(36, Softmax)
+  → Dense(256, ReLU) → BatchNorm → Dropout(0.3)
+  → Dense(128, ReLU) → BatchNorm → Dropout(0.3)
+  → Dense(64,  ReLU) → BatchNorm → Dropout(0.3)
+  → Dense(36, Softmax)
 ```
-```
-Total parameters : ~50,000
-Model size       : < 5MB
-Training time    : ~5 minutes on CPU
-```
+Adam optimizer (lr 0.001), batch size 32, up to 100 epochs with early stopping (patience 10).
 
 ---
 
-## 📈 Results
+## Dataset
 
-| Metric | Score |
-|--------|-------|
-| Overall test accuracy | 98.87% |
-| Average confidence | 99.4% |
-| Letters A-Z accuracy | 94-100% |
-| Digits 2-9 accuracy | 97-100% |
-| Digit 0 accuracy | 88.2% |
-| Digit 1 accuracy | 82.8% |
+| Source | Content |
+|---|---|
+| Kaggle "ASL Alphabet" | about 3,000 images per letter (A–Z) |
+| My own webcam frames | 300 frames per class for all 36 classes (letters and digits) |
+| **Total** | **88,800 images** (26 letters × 3,300 + 10 digits × 300) |
 
-### Weak Classes
-```
-Digit 0 → 88.2% (slightly below 90% target)
-Digit 1 → 82.8% (limited training samples)
+After pose extraction, **72,901 samples** remained (82.1%). The rest were images where MediaPipe did not find a hand.
 
-Fix: collect more data for digits 0 and 1
-```
+The full dataset is not stored in this repository (88,800 files is too large for GitHub). `data/samples/` has one of my own webcam frames for every class (36 images) so you can see what the data looks like. To retrain, download the Kaggle dataset, put the images in `data/raw/<CLASS>/`, and collect your own with `collect_data.py`.
 
 ---
 
-## 🔧 Tech Stack
+## 🧩 Problems I hit and how I solved them
 
-| Component | Tool |
-|-----------|------|
-| Pose Extraction | MediaPipe Hands |
-| Video Capture | OpenCV |
-| Data Handling | NumPy, Pandas |
-| Model | TensorFlow/Keras MLP |
-| Visualization | Matplotlib, Seaborn |
-| Environment | Conda (sign_lang) |
+**1. Library version conflicts (MediaPipe, OpenCV, NumPy, protobuf, TensorFlow).**
+These packages broke each other on my Mac depending on install order and versions. I made a clean conda environment, found a combination that works, and pinned the exact versions in `requirements.txt` (NumPy 1.26.4, protobuf 3.20.3, OpenCV 4.8.1.78, MediaPipe 0.10.9, TensorFlow 2.13.0).
+
+**2. 17.9% of the images had no detectable hand.**
+MediaPipe could not find a hand in about 1 of every 6 images. I dropped those instead of guessing, which left 72,901 clean samples.
+
+**3. Imbalanced classes: letters have 3,300 images, digits only 300.**
+The digits are my own webcam data only, so they have about 10× fewer samples. This is why digits 0 and 1 are the weakest classes (88.2% and 82.8%). The fix is more digit data, which is the first item in my next steps.
+
+**4. Predictions flickered on live video.**
+A single frame can be misread, so the label jumped between letters. I added two filters: a confidence threshold (below 0.85 shows "Unknown") and a majority vote over the last 7 frames. The live output became stable.
+
+**5. The model failed to load across TensorFlow versions.**
+A model trained in one TensorFlow version would not load in another. I now train and run in the same pinned environment.
+
+**6. The repository was 1.2 GB.**
+I had committed all 88,800 training images by mistake, even though they were in `.gitignore` (git keeps tracking a file once it has been added). I removed them from the whole git history, so the repository is now small and clones in seconds.
 
 ---
 
-## ⚠️ Known Issues & Fixes
+## Limitations and next steps
 
-### MediaPipe/OpenCV conflict on Mac
+- **Motion letters:** J and Z are drawn in the air, but the system looks at one frame at a time, so they are less reliable.
+- **Digits 0 and 1:** need more training data.
+- **New people and cameras:** test on other signers, and split train and test by person instead of randomly.
+- **Words:** the sentence builder only joins letters. A next step is a spell-corrector or a model for whole signs.
+
+---
+
+## Try it in 2 minutes (no retraining needed)
+
+The trained model is included, so you can run the live demo right after cloning.
+
 ```bash
-# Use the sign_lang conda environment
+git clone https://github.com/Umid-R/Sign_Language_Detection.git
+cd Sign_Language_Detection
+
+conda create -n sign_lang python=3.10 -y
 conda activate sign_lang
-```
+pip install -r requirements.txt
 
-### NumPy version conflict
-```bash
-pip install numpy==1.26.4
-```
-
-### Model loading error across TF versions
-```bash
-# Always train and run in same environment
-conda activate sign_lang
-python train.py        # retrain if needed
 python inference_realtime.py
 ```
 
+Controls: `Q` quit, `C` clear the sentence, `Space` add a space.
+
+To check the results yourself: `python evaluate.py` (uses the included test set).
+
+### Retrain from scratch
+```bash
+python collect_data.py      # optional: capture your own frames (Space = capture, Q = quit)
+python extract_poses.py     # images → 63-number landmark vectors (1–2 hours for the full set)
+python train.py             # trains the model, saves models/best_model.h5 and the plots
+python evaluate.py          # per-class report and confusion matrix
+```
+
 ---
 
-## 📝 Notes
-- J and Z are motion-based gestures and may be less accurate
-  as they require movement rather than static poses
-- Digit 1 has fewer training samples — collect more for better accuracy
-- System works best in good lighting with hand clearly visible
-- Both left and right hands are supported
+## Project structure
 
----
+```
+├── collect_data.py          # capture webcam frames per gesture
+├── extract_poses.py         # MediaPipe landmarks → normalized vectors
+├── train.py                 # train the MLP classifier
+├── evaluate.py              # test accuracy, per-class report, confusion matrix
+├── inference_realtime.py    # live webcam app
+├── config.py                # all settings in one place
+├── models/                  # trained model + label encoder
+├── plots/                   # confusion matrix, training curves
+├── data/samples/            # 1 example webcam frame per class
+├── data/poses/              # test split (X_test.npy, y_test.npy)
+└── requirements.txt
+```
 
-
+All settings (batch size, epochs, dropout, confidence threshold, smoothing window) are in `config.py`.
